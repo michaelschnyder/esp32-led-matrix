@@ -30,7 +30,12 @@ public:
      * numberOfDisplays: number of connected devices
      * slaveSelectPin: CS (or SS) pin connected to your ESP8266
      */
-    LedMatrix(byte numberOfDisplays, int8_t sck, int8_t miso, int8_t mosi, byte slaveSelectPin);
+    LedMatrix(byte numberOfDisplays, byte slaveSelectPin);
+    
+    /**
+     * Initializes the SPI interface
+     */
+    void init(SPIClass spi);
     
     /**
      * Initializes the SPI interface
@@ -130,8 +135,7 @@ private:
     byte mySlaveSelectPin = 0;
     byte myCharWidth = 7;
     byte myTextAlignment = 1;
-    int8_t _sck;
-    int8_t _miso;
-    int8_t _mosi;
+    SPIClass mySpi;
+    
     void calculateTextAlignmentOffset();
 };

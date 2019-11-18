@@ -5,25 +5,23 @@
 /**
  * Heavily influenced by the code and the blog posts from https://github.com/nickgammon/MAX7219_Dot_Matrix
  */
-LedMatrix::LedMatrix(byte numberOfDevices, int8_t sck, int8_t miso, int8_t mosi, byte slaveSelectPin) {
+LedMatrix::LedMatrix(byte numberOfDevices, byte slaveSelectPin) {
     myNumberOfDevices = numberOfDevices;
     mySlaveSelectPin = slaveSelectPin;
     cols = new byte[numberOfDevices * 8];
-    _sck = sck;
-    _miso = miso;
-    _mosi = mosi;
 }
 
 /**
  *  numberOfDevices: how many modules are daisy changed togehter
  *  slaveSelectPin: which pin is controlling the CS/SS pin of the first module?
  */
-void LedMatrix::init() {
+void LedMatrix::init(SPIClass spi) {
+    mySpi = spi;
     pinMode(mySlaveSelectPin, OUTPUT);
     
-    SPI.begin ( _sck,  _miso,  _mosi,  mySlaveSelectPin);
-    SPI.setDataMode(SPI_MODE0);
-    SPI.setClockDivider(SPI_CLOCK_DIV128);
+    mySpi.begin();
+    mySpi.setDataMode(SPI_MODE0);
+    mySpi.setClockDivider(SPI_CLOCK_DIV128);
     for(byte device = 0; device < myNumberOfDevices; device++) {
         sendByte (device, MAX7219_REG_SCANLIMIT, 7);   // show all 8 digits
         sendByte (device, MAX7219_REG_DECODEMODE, 0);  // using an led matrix (not digits)
@@ -31,6 +29,9 @@ void LedMatrix::init() {
         sendByte (device, MAX7219_REG_INTENSITY, 0);   // character intensity: range: 0 to 15
         sendByte (device, MAX7219_REG_SHUTDOWN, 1);    // not in shutdown mode (ie. start it up)
     }
+}
+void LedMatrix::init() {
+    LedMatrix::init(SPI);
 }
 
 void LedMatrix::sendByte (const byte device, const byte reg, const byte data) {
@@ -48,8 +49,8 @@ void LedMatrix::sendByte (const byte device, const byte reg, const byte data) {
     digitalWrite(mySlaveSelectPin,LOW);
     // now shift out the data
     for(int i=0;i<myNumberOfDevices;i++) {
-        SPI.transfer (spiregister[i]);
-        SPI.transfer (spidata[i]);
+        mySpi.transfer (spiregister[i]);
+        mySpi.transfer (spidata[i]);
     }
     digitalWrite (mySlaveSelectPin, HIGH);
     
